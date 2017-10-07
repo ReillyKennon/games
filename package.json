@@ -1,0 +1,14 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "Nodejs server for games folder",
+  "main": "start",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Reilly Kennon",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.4"
+  }
+}

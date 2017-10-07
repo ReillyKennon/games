@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+  text-align: center;
+}
+canvas {
+  border: solid .3em grey;
+  /*height: 90vh;*/
+
+}
+</style>
+</head>
+<body>
+  <a href="../index.html">Home</a>
+
+<div onmousemove="onMouseMove(event)" onmouseout="clearCoor()"
+  <canvas  id="gameCanvas" width="400" height="300"></canvas>
+
+></div>
+
+<p>Mouse over the rectangle above, and get the coordinates of your mouse pointer.</p>
+
+<p>When the mouse is moved over the div, the p element will display the
+  horizontal and vertical coordinates of your mouse pointer, whose values are
+  returned from the clientX and clientY properties on the
+  MouseEvent object.</p>
+
+<p id="demo"></p>
+
+<script>
+
+
+let y = 0;
+function onMouseMove(e) {
+    var x = e.clientX;
+    y = e.clientY;
+    var coor = "Coordinates: (" + x + "," + y + ")";
+    console.log(y);
+    document.getElementById("demo").innerHTML = coor;
+    return y = y;
+}
+console.log(y);
+function clearCoor() {
+    document.getElementById("demo").innerHTML = "";
+}
+
+
+
+</script>
+
+</body>
+</html>

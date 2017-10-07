@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style >
+            body {
+              text-align: center;
+            }
+            canvas {
+              border: solid .3em grey;
+              /*height: 90vh;*/
+    
+            }
+     </style>
+    <title>Racing</title>
+</head>
+<body>
+    <a href="../index.html">Home</a>
+    <h1>Night Ride</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+
+    <script>
+
+        //GLOBAL VARS
+        var canvas, canvasContext;
+
+        //CAR
+        let carX = 75;
+        let carVelocity = 0;
+        let carY = 75;
+        let carAng = 0;
+
+        //CONTROLS
+        const KEY_LEFT = 37;
+        const KEY_UP = 38;
+        const KEY_RIGHT = 39;
+        const KEY_DOWN = 40;
+
+        //IMAGES
+        const carPic = document.createElement("img");
+        let carPicLoaded = false;
+
+        //Track
+        const TRACK_W = 40;
+        const TRACK_H = 40;
+        const TRACK_GAP = 2;
+        const TRACK_COLUMNS = 20;
+        const TRACK_ROWS = 15;
+        let trackGrid = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                         1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                         1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                         1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1,
+                         1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+                         1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+                         1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+                         1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+                         1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+                         1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+                         1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+                         1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1,
+                         1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                         1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+        
+        function updateMousePos(evt) {
+            let rect = canvas.getBoundingClientRect();
+            let root = document.documentElement;
+
+            mouseX = evt.clientX - rect.left - root.scrollLeft;
+            mouseY = evt.clientY - rect.top - root.scrollTop;
+
+
+        }
+
+        function keyPressed(evt) {
+            if(evt.keyCode == KEY_LEFT) {
+                carAng -= 0.5;
+            }
+            if(evt.keyCode == KEY_RIGHT) {
+                carAng += 0.5;
+            }
+            if(evt.keyCode == KEY_UP) {
+                carVelocity += 0.5;
+            }
+            if(evt.keyCode == KEY_DOWN) {
+                carVelocity -= 0.5;
+            }
+            evt.preventDefault()
+        }
+
+        function keyReleased(evt) {
+            console.log("key released: " + evt.keyCode);
+        }
+
+
+        window.onload = function() {
+            canvas = document.getElementById('gameCanvas');
+            canvasContext = canvas.getContext('2d');
+            
+            //Motion
+            const FramesPerSecond = 30;
+            setInterval(updateAll, 1000/FramesPerSecond);
+
+            //Events
+            canvas.addEventListener('mousemove', updateMousePos);
+
+            document.addEventListener('keydown', keyPressed);
+            document.addEventListener('keyup', keyReleased);
+
+            carPic.onload = function() {
+                carPicLoaded = true; 
+            }
+            carPic.src = "player1car.png";
+
+            carReset();
+            
+            
+        }
+
+        //LOGIC FUNCTIONS
+
+        function updateAll() {
+            drawAll();
+            animateAll();
+ 
+        }
+
+
+
+        function carReset() {
+            for (let eachRow = 0; eachRow < TRACK_ROWS; eachRow++) {
+                for (let eachCol = 0; eachCol < TRACK_COLUMNS; eachCol++) {
+
+                    let arrayIndex = rowColToArrayIndex(eachCol, eachRow);
+
+                    if(trackGrid[arrayIndex] === 2){ // Start at 2 on grid
+                        trackGrid[arrayIndex] = 0;
+                        carX = eachCol * TRACK_W;
+                        carY = eachRow * TRACK_H;
+
+                    }
+                }
+            }    
+        }
+
+        //CAR TO WALL HIT DETECTION
+        function carMove() {
+
+
+            carX += Math.cos(carAng) * carVelocity;
+            carY += Math.sin(carAng) * carVelocity;
+            // carAng += 0.02;
+
+
+        }
+
+        function isTrackAtColRow(col, row) {    
+            if (col >= 0 && col < TRACK_COLUMNS &&
+                row >= 0 && row < TRACK_ROWS) {
+                    let trackIndexUnderCoord = rowColToArrayIndex(col, row); 
+                    return trackGrid[trackIndexUnderCoord];
+                } else {
+                    return false; 
+                }
+           
+        }
+
+        //CAR TO TRACK HIT DETECTION
+        function carTrackHandling() {
+            let carTrackCol = Math.floor(carX / TRACK_W);
+            let carTrackRow = Math.floor(carY / TRACK_H);
+            let trackIndexUndercar = rowColToArrayIndex(carTrackCol, carTrackRow);
+            if (carTrackCol >= 0 && carTrackCol < TRACK_COLUMNS &&
+                carTrackRow >= 0 && carTrackRow < TRACK_ROWS) {
+
+                if (isTrackAtColRow(carTrackCol, carTrackRow)) {
+                    carVelocity = 0;
+                } //end of Track hit    
+            } //end of valid col and row
+        }
+
+
+
+        //Display Mouse Coordinates
+        function displayMousePos() {
+            colorText(Math.floor(mouseTrackCol) + ', ' + Math.floor(mouseTrackRow) + ':' + Math.floor(trackIndexUnderMouse), 
+                        mouseX,mouseY, 'yellow');
+        }
+
+        function animateAll() {
+
+            carMove();
+
+            carTrackHandling();
+
+
+
+            
+
+        }
+           
+        function drawAll() {
+            colorRect(0,0, canvas.width,canvas.height, 'black'); //Clear Screen
+
+
+            // colorCircle(carX,carY, 10, 'white'); //car
+
+            if(carPicLoaded) {
+                drawBitmapCenteredWithRotation(carPic, carX, carY, carAng);
+       
+            }
+
+
+
+            drawTracks();
+
+            
+
+
+        }
+         
+        function drawBitmapCenteredWithRotation(useBitmap, atX, atY, withAng) {
+
+            canvasContext.save();
+            canvasContext.translate(atX, atY);
+            canvasContext.rotate(withAng);
+            canvasContext.drawImage(useBitmap, -useBitmap.width/2, -useBitmap.height/2);
+            canvasContext.restore();
+
+        }
+
+        //COLOR FUNCTIONS
+        function colorRect(x,y, width,height, fillColor){
+            canvasContext.fillStyle = fillColor;
+            canvasContext.fillRect(x,y, width,height);
+        }
+
+        function colorCircle(centerX,centerY, radius, fillColor) {
+            canvasContext.fillStyle = fillColor;
+            canvasContext.beginPath();
+            canvasContext.arc(centerX,centerY, radius, 0,Math.PI*2, true);
+            canvasContext.fill();   
+        }
+
+        function rowColToArrayIndex(col, row) {
+            return col + TRACK_COLUMNS * row;
+        }
+
+        function drawTracks() {
+            for (let eachRow = 0; eachRow < TRACK_ROWS; eachRow++) {
+                for (let eachCol = 0; eachCol < TRACK_COLUMNS; eachCol++) {
+
+                    let arrayIndex = rowColToArrayIndex(eachCol, eachRow);
+
+                    if(trackGrid[arrayIndex] === 1){
+                        colorRect(TRACK_W * eachCol, //Number of columns
+                            TRACK_H * eachRow, //Number of rows
+                                TRACK_W - TRACK_GAP,TRACK_H - TRACK_GAP, 'blue');
+                    } //End of is Track here
+                } //end of for each Track
+            } //end of for eachRow 
+        } //end of drawTracks()
+
+        function colorText(showWords, textX,textY, fillColor) {
+            canvasContext.fillStyle = fillColor;
+            canvasContext.fillText(showWords, textX,textY);
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    </script>
+</body>
+</html>
